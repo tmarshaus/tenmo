@@ -1,7 +1,9 @@
-﻿namespace TenmoServer.DAO
+﻿using TenmoServer.Models;
+
+namespace TenmoServer.DAO
 {
     public interface IAccountDAO
     {
-        decimal GetBalance(int userId);
+        Account GetAccount(int userId);
     }
 }

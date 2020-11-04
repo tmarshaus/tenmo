@@ -13,9 +13,9 @@ namespace TenmoServer.DAO
     {
         private string connString = "Server=.\\SQLEXPRESS;Database=tenmo;Trusted_Connection=True;";
 
-        public decimal GetBalance(int userId)
+        public Account GetAccount(int userId)
         {
-            string sql = "Select balance from accounts where user_id = @user_id";
+            string sql = "Select * from accounts where user_id = @user_id";
             Account acct = new Account();
             try
             {
@@ -34,7 +34,7 @@ namespace TenmoServer.DAO
                         acct.Balance = Convert.ToDecimal(rdr["balance"]);
                         acct.AccountId = Convert.ToInt32(rdr["account_id"]);
                     }
-                    return acct.Balance;
+                    return acct;
                 }
             }
             catch (SqlException ex)
