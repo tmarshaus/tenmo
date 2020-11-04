@@ -2,13 +2,18 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using TenmoClient;
 using TenmoServer.Models;
 
 namespace TenmoServer.DAO
 {
+
     public class TransferDAO : ITransferDAO
     {
+        private IAccountDAO accountDAO;
+
         private string connString = "Server=.\\SQLEXPRESS;Database=tenmo;Trusted_Connection=True;";
 
         public List<User> GetAllAccounts()
@@ -42,9 +47,40 @@ namespace TenmoServer.DAO
             }
         }
 
-        public Account SendMoneyTo(int fromUserId, int toUserId, decimal sentMoney)
+        public Account SendMoneyTo(int toUserId, decimal sentMoney) //removed fromUserId
         {
-            string sql = "Select balance from account where user_id = @fromUserId;";
+            //Get current USer id balance 
+            int currentUserId = UserService.GetUserId();
+            decimal currentUserBalance = accountDAO.GetAccount(currentUserId).Balance;
+
+            //Get toUserid balance 
+            decimal toUserBalance = accountDAO.GetAccount(toUserId).Balance;
+
+            //Check balance of current user against sentMoney 
+            if (currentUserBalance >= sentMoney)
+            {
+                //Updated balance for user 
+                decimal newCurrentUserBalance = currentUserBalance - sentMoney;
+
+                //Updated balance for toUserId
+                decimal newToUserBalance = toUserBalance + sentMoney;
+
+                //Update balance for current user
+                UpdateBalance(currentUserId, newCurrentUserBalance);
+
+                //Update balance for toUser
+                UpdateBalance(toUserId, newToUserBalance);
+            }
+
+            return accountDAO.GetAccount(currentUserId);
+
+        }
+
+        public bool UpdateBalance (int userId, decimal newBalance)
+        {
+            string sql = @"Update accounts 
+                               Set balance = @newBalance 
+                                   Where user_id = @userId;";
 
             try
             {
@@ -53,21 +89,24 @@ namespace TenmoServer.DAO
                     conn.Open();
 
                     SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@newBalance", newBalance);
+                    cmd.Parameters.AddWithValue("@userId", userId);
 
-                    SqlDataReader rdr = cmd.ExecuteReader();
+                    int rowsAffected = cmd.ExecuteNonQuery();
 
-                    while (rdr.Read())
+                    if (rowsAffected == 1)
                     {
-                        User user = new User();
-                        user.UserId = Convert.ToInt32(rdr["user_id"]);
-                        user.Username = Convert.ToString(rdr["username"]);
-                        users.Add(user);
+                        return true;
                     }
-                    return users;
+                    else
+                    {
+                        return false;
+                    }
                 }
             }
             catch (SqlException ex)
             {
+                Console.WriteLine(ex.Message);
                 throw;
             }
         }

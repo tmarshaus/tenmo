@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TenmoServer.DAO;
+using TenmoServer.Models;
 
 namespace TenmoServer.Controllers
 {
@@ -21,8 +22,10 @@ namespace TenmoServer.Controllers
         }
 
         [HttpPut("{toUserId}")]
-        public IActionResult SendMoney(int fromUserId, int toUserId, decimal sentMoney)
+        public ActionResult<Account> SendTEBucks(int toUserId, decimal sentMoney)
         {
+            Account currentUserAccount = transferDAO.SendMoneyTo(toUserId, sentMoney);
+            return Ok(currentUserAccount);
         }
     }
 }
