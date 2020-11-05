@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using System.Text;
 using TenmoClient.Data;
 
+
 namespace TenmoClient.Views
 {
     public class MainMenu : ConsoleMenu
     {
+        private APIService apiService = new APIService();
 
         public MainMenu()
         { 
@@ -27,7 +29,7 @@ namespace TenmoClient.Views
 
         private MenuOptionResult ViewBalance()
         {
-            Console.WriteLine("Not yet implemented!");
+            Console.WriteLine($"Your current account balance is: {apiService.GetAccount().Balance}");
             return MenuOptionResult.WaitAfterMenuSelection;
         }
 
