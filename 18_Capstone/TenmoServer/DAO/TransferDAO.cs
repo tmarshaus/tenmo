@@ -18,7 +18,7 @@ namespace TenmoServer.DAO
         public List<User> GetAllAccounts()
         {
             List<User> users = new List<User>();
-            string sql = "Select user_id, username from users";
+            string sql = "Select user_id, username from users where user_id != @currentUserId";
 
             try
             {
@@ -27,6 +27,7 @@ namespace TenmoServer.DAO
                     conn.Open();
 
                     SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@currentUserId", UserService.GetUserId());
 
                     SqlDataReader rdr = cmd.ExecuteReader();
 

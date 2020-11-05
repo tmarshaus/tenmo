@@ -1,4 +1,5 @@
 ﻿using RestSharp;
+using RestSharp.Authenticators;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,17 +9,20 @@ namespace TenmoClient
 {
     public class APIService
     {
-        const string API_URL = "http://localhost:44315/account";
-        const string API_TRANSFER_URL = "http://localhost:44315/account/transfer";
+        private const string API_URL = "https://localhost:44315/account";
+        private const string API_TRANSFER_URL = "https://localhost:44315/account/transfer";
         private static RestClient authClient = new RestClient();
 
         public bool LoggedIn { get { return UserService.IsLoggedIn(); } }
-        
+
         public Account GetAccount()
         {
             if (LoggedIn)
             {
-                RestRequest request = new RestRequest($"API_URL/{UserService.GetUserId()}");
+                RestRequest request = new RestRequest($"{API_URL}/{UserService.GetUserId()}");
+
+                authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
+
                 IRestResponse<Account> response = authClient.Get<Account>(request);
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
@@ -38,7 +42,6 @@ namespace TenmoClient
                     //success
                     return response.Data;
                 }
-
             }
             else
             {
@@ -46,8 +49,5 @@ namespace TenmoClient
                 return null;
             }
         }
-
-        
-
     }
 }
