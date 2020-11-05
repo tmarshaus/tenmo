@@ -47,7 +47,21 @@ namespace TenmoClient.Views
 
         private MenuOptionResult SendTEBucks()
         {
-            Console.WriteLine("Not yet implemented!");
+            //Get list of all users and return them
+            List<User> users = apiService.GetUsers();
+            foreach (User user in users)
+            {
+                Console.WriteLine($"User ID: {user.UserId}     Username: {user.Username}");
+            }
+            //Ask for user input of ID
+            Console.WriteLine("Please input the User ID you would like to send TE Bucks: ");
+
+            //Read user input
+            Int32.TryParse(Console.ReadLine(), out int toUserId);
+
+            //Use SendMoney method 
+            apiService.SendMoney(toUserId);
+
             return MenuOptionResult.WaitAfterMenuSelection;
         }
 

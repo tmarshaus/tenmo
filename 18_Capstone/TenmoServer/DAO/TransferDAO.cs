@@ -47,7 +47,7 @@ namespace TenmoServer.DAO
             }
         }
 
-        //TODO 01: Set up else for current balance being less than send money balance
+        
         public Account SendMoneyTo(int toUserId, decimal sentMoney) //removed fromUserId
         {
             //Get current USer id balance
