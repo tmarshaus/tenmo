@@ -85,15 +85,23 @@ namespace TenmoClient
             }
         }
 
-        public Account SendMoney(int toUserId)
+        public Transfer SendMoney(int toUserId, decimal sentMoney)
         {
             if (LoggedIn)
             {
-                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/{toUserId}");
+                Transfer transfer = new Transfer();
+                transfer.AccountFrom = UserService.GetUserId();
+                transfer.AccountTo = toUserId;
+                transfer.Amount = sentMoney;
+                transfer.TransferStatusId = 2;
+                transfer.TransferTypeId = 2;
+
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}");
+                request.AddJsonBody(transfer);
 
                 authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
 
-                IRestResponse<Account> response = authClient.Put<Account>(request);
+                IRestResponse<Transfer> response = authClient.Post<Transfer>(request);
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                 {

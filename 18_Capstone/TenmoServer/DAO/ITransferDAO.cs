@@ -7,6 +7,6 @@ namespace TenmoServer.DAO
     {
         List<User> GetAllAccounts();
 
-        Account SendMoneyTo(int toUserId, decimal sentMoney);
+        Transfer SendMoneyTo(Transfer transfer);
     }
 }

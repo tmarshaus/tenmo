@@ -11,7 +11,7 @@ namespace TenmoServer.Controllers
 {
     [ApiController]
     [Route("account/[controller]")]
-    //[Authorize]
+    [Authorize]
     public class TransferController : ControllerBase
     {
         private ITransferDAO transferDAO;
@@ -23,11 +23,14 @@ namespace TenmoServer.Controllers
             this.accountDAO = accountDAO;
         }
 
-        [HttpPut("{toUserId}")]
-        public ActionResult<Account> SendTEBucks(int toUserId, decimal sentMoney)
+        [HttpPost]
+        public ActionResult<Transfer> SendTEBucks(Transfer transfer)
         {
-            Account currentUserAccount = transferDAO.SendMoneyTo(toUserId, sentMoney);
-            return Ok(currentUserAccount);
+            //Make sure from account is owned by current user
+            Account currentUserAccount = accountDAO.GetAccount(GetUserId());
+            transfer.AccountFrom = currentUserAccount.AccountId;
+            transferDAO.SendMoneyTo(transfer);
+            return Ok(transfer);
         }
 
         [HttpGet("users")]
@@ -35,6 +38,12 @@ namespace TenmoServer.Controllers
         {
             List<User> users = transferDAO.GetAllAccounts();
             return Ok(users);
+        }
+
+        private int GetUserId()
+        {
+            string strUserId = User.Claims.FirstOrDefault(claim => claim.Type == "sub")?.Value;
+            return String.IsNullOrEmpty(strUserId) ? 0 : Convert.ToInt32(strUserId);
         }
     }
 }

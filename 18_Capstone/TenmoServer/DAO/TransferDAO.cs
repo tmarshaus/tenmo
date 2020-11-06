@@ -6,12 +6,18 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using TenmoClient;
 using TenmoServer.Models;
+using TenmoServer.Security;
 
 namespace TenmoServer.DAO
 {
     public class TransferDAO : ITransferDAO
     {
         private IAccountDAO accountDAO;
+
+        public TransferDAO(IAccountDAO accountDAO)
+        {
+            this.accountDAO = accountDAO;
+        }
 
         private string connString = "Server=.\\SQLEXPRESS;Database=tenmo;Trusted_Connection=True;";
 
@@ -47,38 +53,39 @@ namespace TenmoServer.DAO
             }
         }
 
-        
-        public Account SendMoneyTo(int toUserId, decimal sentMoney) //removed fromUserId
+        public Transfer SendMoneyTo(Transfer transfer) //removed fromUserId
         {
-            //Get current USer id balance
-            int currentUserId = UserService.GetUserId();
-            decimal currentUserBalance = accountDAO.GetAccount(currentUserId).Balance;
+            //Get current User id balance
+            decimal currentUserBalance = accountDAO.GetAccount(transfer.AccountFrom).Balance;
 
             //Get toUserid balance
-            decimal toUserBalance = accountDAO.GetAccount(toUserId).Balance;
+            decimal toUserBalance = accountDAO.GetAccount(transfer.AccountTo).Balance;
 
             //Check balance of current user against sentMoney
-            if (currentUserBalance >= sentMoney)
+            if (currentUserBalance >= transfer.Amount)
             {
                 //Updated balance for user
-                decimal newCurrentUserBalance = currentUserBalance - sentMoney;
+                decimal newCurrentUserBalance = currentUserBalance - transfer.Amount;
 
                 //Updated balance for toUserId
-                decimal newToUserBalance = toUserBalance + sentMoney;
+                decimal newToUserBalance = toUserBalance + transfer.Amount;
+
+                //Update transfer status
+                transfer.TransferStatusId = 2;
 
                 //Update balance for current user
-                UpdateBalance(currentUserId, newCurrentUserBalance);
+                UpdateBalance(transfer.AccountFrom, newCurrentUserBalance);
 
                 //Update balance for toUser
-                UpdateBalance(toUserId, newToUserBalance);
+                UpdateBalance(transfer.AccountTo, newToUserBalance);
 
-                LogTransfer(currentUserId, toUserId, sentMoney, 2, 2);
-                return accountDAO.GetAccount(currentUserId);
+                LogTransfer(transfer.AccountFrom, transfer.AccountTo, transfer.Amount, 2, transfer.TransferStatusId);
+                return transfer;
             }
             else
             {
-                LogTransfer(currentUserId, toUserId, sentMoney, 2, 3);
-                return accountDAO.GetAccount(currentUserId);
+                transfer.TransferStatusId = 3;
+                return transfer;
             }
         }
 

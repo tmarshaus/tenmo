@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using TenmoClient.Data;
 
-
 namespace TenmoClient.Views
 {
     public class MainMenu : ConsoleMenu
@@ -12,7 +11,7 @@ namespace TenmoClient.Views
         private APIService apiService = new APIService();
 
         public MainMenu()
-        { 
+        {
             AddOption("View your current balance", ViewBalance)
                 .AddOption("View your past transfers", ViewTransfers)
                 .AddOption("View your pending requests", ViewRequests)
@@ -59,8 +58,14 @@ namespace TenmoClient.Views
             //Read user input
             Int32.TryParse(Console.ReadLine(), out int toUserId);
 
-            //Use SendMoney method 
-            apiService.SendMoney(toUserId);
+            //Ask for user input of money needing to be sent
+            Console.WriteLine("How much money would youlike to send?");
+
+            //Read input
+            Decimal.TryParse(Console.ReadLine(), out decimal moneySent);
+
+            //Use SendMoney method
+            apiService.SendMoney(toUserId, moneySent);
 
             return MenuOptionResult.WaitAfterMenuSelection;
         }
@@ -76,6 +81,5 @@ namespace TenmoClient.Views
             UserService.SetLogin(new API_User()); //wipe out previous login info
             return MenuOptionResult.CloseMenuAfterSelection;
         }
-
     }
 }
