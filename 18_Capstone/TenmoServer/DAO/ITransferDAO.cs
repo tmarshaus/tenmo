@@ -9,7 +9,7 @@ namespace TenmoServer.DAO
 
         Transfer SendMoneyTo(Transfer transfer);
 
-        List<List<Transfer>> GetUserTransfers();
+        List<Transfer> GetUserTransfers();
 
         bool LogTransfer(int fromId, int toId, decimal sentMoney, int transferType, int transferStatusId);
 

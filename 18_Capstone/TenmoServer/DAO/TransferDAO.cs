@@ -21,10 +21,11 @@ namespace TenmoServer.DAO
 
         private string connString = "Server=.\\SQLEXPRESS;Database=tenmo;Trusted_Connection=True;";
 
+        //TODO: In SendTEBucks set up an if/else where in the foreach loop, if the userId == currentuserID, do not console writeline
         public List<User> GetAllUsers()
         {
             List<User> users = new List<User>();
-            string sql = "Select user_id, username from users where user_id != @currentUserId";
+            string sql = "Select user_id, username from users";
 
             try
             {
@@ -33,7 +34,6 @@ namespace TenmoServer.DAO
                     conn.Open();
 
                     SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@currentUserId", UserService.GetUserId());
 
                     SqlDataReader rdr = cmd.ExecuteReader();
 
@@ -223,20 +223,23 @@ namespace TenmoServer.DAO
             }
         }
 
-        public List<List<Transfer>> GetUserTransfers()
+        //Get all transfers 
+
+        //If userId in Account_from == currentUser - pull it from list 
+        //Use getUsers method to determine nonCurrentUsername and add it as to:
+
+        //If userId in Account_to == currentUser - pull it from list 
+        //Use getUsers method to determine noncurrentusername and add it as from: 
+
+
+        public List<Transfer> GetUserTransfers()
         {
-            string sqlFrom = @"Select transfers.*, users.username as usernameFrom from transfers
+            string sql = @"Select transfers.*, users.username as usernameFrom, 
+                        (Select username from users where transfers.account_to = users.user_id) as usernameTo from transfers
                             join accounts on accounts.user_id = transfers.account_from
-                                join users on accounts.user_id = users.user_id
-                                    where 1 in (account_from, account_to);";
+                                join users on accounts.user_id = users.user_id";
 
-            string sqlTo = @"Select transfers.*, users.username as usernameTo from transfers
-                                join accounts on accounts.user_id = transfers.account_to
-                                join users on accounts.user_id = users.user_id ";
-
-            List<Transfer> transfersTo = new List<Transfer>();
-            List<Transfer> transfersFrom = new List<Transfer>();
-            List<List<Transfer>> transfersJoined = new List<List<Transfer>>();
+            List<Transfer> transfers = new List<Transfer>();
 
             try
             {
@@ -244,7 +247,7 @@ namespace TenmoServer.DAO
                 {
                     conn.Open();
 
-                    SqlCommand cmd = new SqlCommand(sqlFrom, conn);
+                    SqlCommand cmd = new SqlCommand(sql, conn);
 
                     SqlDataReader rdr = cmd.ExecuteReader();
 
@@ -259,41 +262,91 @@ namespace TenmoServer.DAO
                         tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
                         tran.Amount = Convert.ToDecimal(rdr["amount"]);
                         tran.UsernameFrom = Convert.ToString(rdr["usernameFrom"]);
-
-                        transfersFrom.Add(tran);
-                    }
-                }
-                using (SqlConnection conn = new SqlConnection(connString))
-                {
-                    conn.Open();
-
-                    SqlCommand cmd = new SqlCommand(sqlTo, conn);
-
-                    SqlDataReader rdr = cmd.ExecuteReader();
-
-                    while (rdr.Read())
-                    {
-                        Transfer tran = new Transfer();
-
-                        tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
-                        tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
-                        tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
-                        tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
-                        tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
-                        tran.Amount = Convert.ToDecimal(rdr["amount"]);
                         tran.UsernameTo = Convert.ToString(rdr["usernameTo"]);
 
-                        transfersTo.Add(tran);
+                        transfers.Add(tran);
                     }
                 }
+
+                return transfers;
+
             }
             catch (SqlException ex)
             {
                 throw;
             }
-            transfersJoined.Add(transfersTo);
-            transfersJoined.Add(transfersFrom);
-            return transfersJoined;
         }
-    }
+            //public List<List<Transfer>> GetUserTransfers()
+            //{
+            //    string sqlFrom = @"Select transfers.*, users.username as usernameFrom from transfers
+            //                    join accounts on accounts.user_id = transfers.account_from
+            //                        join users on accounts.user_id = users.user_id
+            //                            where 1 in (account_from, account_to);";
+
+            //    string sqlTo = @"Select transfers.*, users.username as usernameTo from transfers
+            //                        join accounts on accounts.user_id = transfers.account_to
+            //                        join users on accounts.user_id = users.user_id ";
+
+            //    List<Transfer> transfersTo = new List<Transfer>();
+            //    List<Transfer> transfersFrom = new List<Transfer>();
+            //    List<List<Transfer>> transfersJoined = new List<List<Transfer>>();
+
+            //    try
+            //    {
+            //        using (SqlConnection conn = new SqlConnection(connString))
+            //        {
+            //            conn.Open();
+
+            //            SqlCommand cmd = new SqlCommand(sqlFrom, conn);
+
+            //            SqlDataReader rdr = cmd.ExecuteReader();
+
+            //            while (rdr.Read())
+            //            {
+            //                Transfer tran = new Transfer();
+
+            //                tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
+            //                tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
+            //                tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
+            //                tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
+            //                tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
+            //                tran.Amount = Convert.ToDecimal(rdr["amount"]);
+            //                tran.UsernameFrom = Convert.ToString(rdr["usernameFrom"]);
+
+            //                transfersFrom.Add(tran);
+            //            }
+            //        }
+            //        using (SqlConnection conn = new SqlConnection(connString))
+            //        {
+            //            conn.Open();
+
+            //            SqlCommand cmd = new SqlCommand(sqlTo, conn);
+
+            //            SqlDataReader rdr = cmd.ExecuteReader();
+
+            //            while (rdr.Read())
+            //            {
+            //                Transfer tran = new Transfer();
+
+            //                tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
+            //                tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
+            //                tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
+            //                tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
+            //                tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
+            //                tran.Amount = Convert.ToDecimal(rdr["amount"]);
+            //                tran.UsernameTo = Convert.ToString(rdr["usernameTo"]);
+
+            //                transfersTo.Add(tran);
+            //            }
+            //        }
+            //    }
+            //    catch (SqlException ex)
+            //    {
+            //        throw;
+            //    }
+            //    transfersJoined.Add(transfersTo);
+            //    transfersJoined.Add(transfersFrom);
+            //    return transfersJoined;
+            //}
+        }
 }

@@ -128,7 +128,7 @@ namespace TenmoClient
             }
         }
 
-        public List<List<Transfer>> GetUserTransfers()
+        public List<Transfer> GetUserTransfers()
         {
             if (LoggedIn)
             {
@@ -136,7 +136,7 @@ namespace TenmoClient
 
                 authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
 
-                IRestResponse<List<List<Transfer>>> response = authClient.Get<List<List<Transfer>>>(request);
+                IRestResponse<List<Transfer>> response = authClient.Get<List<Transfer>>(request);
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                 {

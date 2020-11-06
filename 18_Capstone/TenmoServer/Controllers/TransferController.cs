@@ -49,7 +49,7 @@ namespace TenmoServer.Controllers
         [HttpGet]
         public ActionResult<List<Transfer>> GetTransferList()
         {
-            List<List<Transfer>> transfers = transferDAO.GetUserTransfers();
+            List<Transfer> transfers = transferDAO.GetUserTransfers();
             return Ok(transfers);
         }
 

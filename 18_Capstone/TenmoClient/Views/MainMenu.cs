@@ -34,22 +34,22 @@ namespace TenmoClient.Views
 
         private MenuOptionResult ViewTransfers()
         {
-            List<List<Transfer>> userTransfers = apiService.GetUserTransfers();
+            List<Transfer> userTransfers = apiService.GetUserTransfers();
 
-            foreach (Transfer tran in userTransfers[0])
+            foreach (Transfer tran in userTransfers)
             {
+                
+
                 if (tran.AccountFrom == UserService.GetUserId())
                 {
                     Console.WriteLine($"Id:{tran.TransferId}         To:{tran.UsernameTo}         Amount:{tran.Amount}");
                 }
-            }
-            foreach (Transfer tran in userTransfers[1])
-            {
-                if (tran.AccountTo == UserService.GetUserId())
+                else
                 {
                     Console.WriteLine($"Id:{tran.TransferId}         From:{tran.UsernameFrom}         Amount:{tran.Amount}");
                 }
             }
+           
 
             Console.WriteLine("Please enter transfer ID to view more details: ");
 
@@ -73,7 +73,11 @@ namespace TenmoClient.Views
             List<User> users = apiService.GetUsers();
             foreach (User user in users)
             {
-                Console.WriteLine($"User ID: {user.UserId}     Username: {user.Username}");
+                if (user.UserId != UserService.GetUserId())
+                {
+                    Console.WriteLine($"User ID: {user.UserId}     Username: {user.Username}");
+                }
+                
             }
             //Ask for user input of ID
             Console.WriteLine("Please input the User ID you would like to send TE Bucks: ");
