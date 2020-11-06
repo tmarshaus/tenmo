@@ -36,7 +36,7 @@ namespace TenmoServer.Controllers
         [HttpGet("users")]
         public ActionResult<List<User>> DisplayAllUsers()
         {
-            List<User> users = transferDAO.GetAllAccounts();
+            List<User> users = transferDAO.GetAllUsers();
             return Ok(users);
         }
 
@@ -44,6 +44,20 @@ namespace TenmoServer.Controllers
         {
             string strUserId = User.Claims.FirstOrDefault(claim => claim.Type == "sub")?.Value;
             return String.IsNullOrEmpty(strUserId) ? 0 : Convert.ToInt32(strUserId);
+        }
+
+        [HttpGet]
+        public ActionResult<List<Transfer>> GetTransferList()
+        {
+            List<List<Transfer>> transfers = transferDAO.GetUserTransfers();
+            return Ok(transfers);
+        }
+
+        [HttpGet("{transferId}")]
+        public ActionResult<TransferDetails> GetTransfer(int transferId)
+        {
+            TransferDetails details = transferDAO.GetTransferDetails(transferId);
+            return Ok(details);
         }
     }
 }

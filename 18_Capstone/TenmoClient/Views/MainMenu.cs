@@ -34,7 +34,30 @@ namespace TenmoClient.Views
 
         private MenuOptionResult ViewTransfers()
         {
-            Console.WriteLine("Not yet implemented!");
+            List<List<Transfer>> userTransfers = apiService.GetUserTransfers();
+
+            foreach (Transfer tran in userTransfers[0])
+            {
+                if (tran.AccountFrom == UserService.GetUserId())
+                {
+                    Console.WriteLine($"Id:{tran.TransferId}         To:{tran.UsernameTo}         Amount:{tran.Amount}");
+                }
+            }
+            foreach (Transfer tran in userTransfers[1])
+            {
+                if (tran.AccountTo == UserService.GetUserId())
+                {
+                    Console.WriteLine($"Id:{tran.TransferId}         From:{tran.UsernameFrom}         Amount:{tran.Amount}");
+                }
+            }
+
+            Console.WriteLine("Please enter transfer ID to view more details: ");
+
+            Int32.TryParse(Console.ReadLine(), out int toTransferId);
+            TransferDetails details = apiService.GetTransferDetails(toTransferId);
+
+            Console.WriteLine($"Id: {details.Id} Account from:{details.From} Account to:{details.To} Type:{details.Type} Status:{details.Status} Amount:{details.Amount}");
+
             return MenuOptionResult.WaitAfterMenuSelection;
         }
 
