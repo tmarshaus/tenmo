@@ -129,8 +129,9 @@ namespace TenmoClient.Views
             //If 2, update transfer status to 3
             else if (userSelection == 2)
             {
-                List<Transfer> userInputTransfers = apiService.GetUserTransfers();
-                foreach (Transfer tran in userInputTransfers)
+                List<Transfer> transferList = apiService.GetUserTransfers();
+                List<Transfer> userInputTransfers = new List<Transfer>();
+                foreach (Transfer tran in transferList.ToList())
                 {
                     if (tran.TransferId == transferId)
                     {
@@ -142,7 +143,7 @@ namespace TenmoClient.Views
                 transferToUpdate.TransferStatusId = 3;
 
                 //Update transfers log
-                apiService.UpdateTransfer(transferToUpdate.TransferId, transferToUpdate.AccountTo, transferToUpdate.Amount, userSelection);
+                apiService.UpdateTransfer(transferToUpdate.TransferId, transferToUpdate.AccountFrom, transferToUpdate.Amount, userSelection);
 
                 Console.WriteLine("Transfer request has been rejected! Get that weak stuff outta here! \n");
             }
