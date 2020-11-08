@@ -33,6 +33,16 @@ namespace TenmoServer.Controllers
             return Ok(transfer);
         }
 
+        [HttpPost]
+        public ActionResult<Transfer> RequestTEBucks(Transfer transfer)
+        {
+            //Make sure from account is owned by current user
+            Account currentUserAccount = accountDAO.GetAccount(GetUserId());
+            transfer.AccountFrom = currentUserAccount.AccountId;
+            transferDAO.RequestMoney(transfer);
+            return Ok(transfer);
+        }
+
         [HttpGet("users")]
         public ActionResult<List<User>> DisplayAllUsers()
         {
@@ -59,5 +69,20 @@ namespace TenmoServer.Controllers
             TransferDetails details = transferDAO.GetTransferDetails(transferId);
             return Ok(details);
         }
+
+        [HttpPut("{transferId}")]
+        public ActionResult<Transfer> UpdateApprovedTransferStatus(int transferId)
+        {
+            Transfer transfer = transferDAO.UpdateApprovedTransfer(transferId);
+            return Ok(transfer);
+        }
+
+        [HttpPut("{transferId}")]
+        public ActionResult<Transfer> UpdateRejectedTransferStatus(int transferId)
+        {
+            Transfer transfer = transferDAO.UpdateRejectedTransfer(transferId);
+            return Ok(transfer);
+        }
+
     }
 }

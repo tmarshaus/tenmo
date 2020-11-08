@@ -89,6 +89,12 @@ namespace TenmoServer.DAO
             }
         }
 
+        public Transfer RequestMoney(Transfer transfer) 
+        {
+            LogTransfer(transfer.AccountFrom, transfer.AccountTo, transfer.Amount, 1, 1);
+            return transfer;
+        }
+
         public bool UpdateBalance(int userId, decimal newBalance)
         {
             string sql = @"Update accounts
@@ -153,6 +159,81 @@ namespace TenmoServer.DAO
                         return false;
                     }
                 }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
+        public Transfer UpdateApprovedTransfer(int transferId)
+        {
+            string sql = @"Update transfers 
+                                Set transfers.transfer_status_id = 2
+                                        Where transfer_id = @transferId;
+                                            @@Identity";
+
+            Transfer tran = new Transfer();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connString))
+                {
+                    conn.Open();
+
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@transferId", transferId);
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
+                        tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
+                        tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
+                        tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
+                        tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
+                        tran.Amount = Convert.ToDecimal(rdr["amount"]);
+                    }
+                }
+                return tran;
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
+
+        public Transfer UpdateRejectedTransfer(int transferId)
+        {
+            string sql = @"Update transfers 
+                                Set transfers.transfer_status_id = 3
+                                        Where transfer_id = @transferId";
+            Transfer tran = new Transfer();
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connString))
+                {
+                    conn.Open();
+
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@transferId", transferId);
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    SqlDataReader rdr = cmd.ExecuteReader();
+                    while (rdr.Read())
+                    {
+                        tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
+                        tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
+                        tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
+                        tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
+                        tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
+                        tran.Amount = Convert.ToDecimal(rdr["amount"]);
+                    }
+                }
+                return tran;
+            
             }
             catch (SqlException ex)
             {
@@ -276,6 +357,7 @@ namespace TenmoServer.DAO
                 throw;
             }
         }
+
 
         //public List<List<Transfer>> GetUserTransfers()
         //{

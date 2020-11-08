@@ -128,6 +128,50 @@ namespace TenmoClient
             }
         }
 
+        public Transfer RequestMoney(int fromUserId, decimal requestedMoney)
+        {
+            if (LoggedIn)
+            {
+                Transfer transfer = new Transfer();
+                transfer.AccountFrom = UserService.GetUserId();
+                transfer.AccountTo = fromUserId;
+                transfer.Amount = requestedMoney;
+                transfer.TransferStatusId = 1;
+                transfer.TransferTypeId = 1;
+
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}");
+                request.AddJsonBody(transfer);
+
+                authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
+
+                IRestResponse<Transfer> response = authClient.Post<Transfer>(request);
+
+                if (response.ResponseStatus != ResponseStatus.Completed)
+                {
+                    //response not received
+                    Console.WriteLine("An error occurred communicating with the server.");
+                    return null;
+                }
+                else if (!response.IsSuccessful)
+                {
+                    //response non-2xx
+                    Console.WriteLine("An error response was received from the server. The status code is " + (int)response.StatusCode);
+                    return null;
+                }
+                else
+                {
+                    //success
+                    return response.Data;
+                }
+            }
+            else
+            {
+                Console.WriteLine("You are not logged in");
+                return null;
+            }
+        }
+
+
         public List<Transfer> GetUserTransfers()
         {
             if (LoggedIn)
@@ -137,6 +181,125 @@ namespace TenmoClient
                 authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
 
                 IRestResponse<List<Transfer>> response = authClient.Get<List<Transfer>>(request);
+
+                if (response.ResponseStatus != ResponseStatus.Completed)
+                {
+                    //response not received
+                    Console.WriteLine("An error occurred communicating with the server.");
+                    return null;
+                }
+                else if (!response.IsSuccessful)
+                {
+                    //response non-2xx
+                    Console.WriteLine("An error response was received from the server. The status code is " + (int)response.StatusCode);
+                    return null;
+                }
+                else
+                {
+                    //success
+                    return response.Data;
+                }
+            }
+            else
+            {
+                Console.WriteLine("You are not logged in");
+                return null;
+            }
+        }
+
+        public List<Transfer> GetPendingUserTransfers()
+        {
+            if (LoggedIn)
+            {
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}");
+
+                authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
+
+                IRestResponse<List<Transfer>> response = authClient.Get<List<Transfer>>(request);
+
+                if (response.ResponseStatus != ResponseStatus.Completed)
+                {
+                    //response not received
+                    Console.WriteLine("An error occurred communicating with the server.");
+                    return null;
+                }
+                else if (!response.IsSuccessful)
+                {
+                    //response non-2xx
+                    Console.WriteLine("An error response was received from the server. The status code is " + (int)response.StatusCode);
+                    return null;
+                }
+                else
+                {
+                    //success
+                    return response.Data;
+                }
+            }
+            else
+            {
+                Console.WriteLine("You are not logged in");
+                return null;
+            }
+        }
+
+        public Transfer UpdateApprovedTransfer (int transferId, int toUserId, decimal requestAmount)
+        {
+            if (LoggedIn)
+            {
+                Transfer transfer = new Transfer();
+                transfer.AccountFrom = UserService.GetUserId();
+                transfer.AccountTo = toUserId;
+                transfer.Amount = requestAmount;
+                transfer.TransferStatusId = 2;
+                transfer.TransferTypeId = 1;
+
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/{transferId}");
+                request.AddJsonBody(transfer);
+                authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
+
+                IRestResponse<Transfer> response = authClient.Put<Transfer>(request);
+
+                if (response.ResponseStatus != ResponseStatus.Completed)
+                {
+                    //response not received
+                    Console.WriteLine("An error occurred communicating with the server.");
+                    return null;
+                }
+                else if (!response.IsSuccessful)
+                {
+                    //response non-2xx
+                    Console.WriteLine("An error response was received from the server. The status code is " + (int)response.StatusCode);
+                    return null;
+                }
+                else
+                {
+                    //success
+                    return response.Data;
+                }
+            }
+            else
+            {
+                Console.WriteLine("You are not logged in");
+                return null;
+            }
+        }
+
+        public Transfer UpdateRejectedTransfer(int transferId, int toUserId, decimal requestAmount)
+        {
+            if (LoggedIn)
+            {
+                Transfer transfer = new Transfer();
+                transfer.AccountFrom = UserService.GetUserId();
+                transfer.AccountTo = toUserId;
+                transfer.Amount = requestAmount;
+                transfer.TransferStatusId = 3;
+                transfer.TransferTypeId = 1;
+
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/{transferId}");
+                request.AddJsonBody(transfer);
+                authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
+
+                IRestResponse<Transfer> response = authClient.Put<Transfer>(request);
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                 {

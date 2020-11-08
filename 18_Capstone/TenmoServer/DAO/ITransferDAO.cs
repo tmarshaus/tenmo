@@ -16,5 +16,13 @@ namespace TenmoServer.DAO
         bool UpdateBalance(int userId, decimal newBalance);
 
         TransferDetails GetTransferDetails(int transferId);
+
+        Transfer RequestMoney(Transfer transfer);
+
+        List<Transfer> GetPendingUserTransfers();
+
+        Transfer UpdateApprovedTransfer(int transferId);
+
+        Transfer UpdateRejectedTransfer(int transferId);
     }
 }

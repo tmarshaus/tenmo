@@ -69,7 +69,89 @@ namespace TenmoClient.Views
 
         private MenuOptionResult ViewRequests()
         {
-            Console.WriteLine("Not yet implemented!");
+            List<Transfer> userTransfers = apiService.GetUserTransfers();
+            Console.WriteLine("Pending Requests");
+            Console.WriteLine("-------------------------------------------");
+            foreach (Transfer tran in userTransfers)
+            {
+                if (tran.AccountFrom == UserService.GetUserId() && tran.TransferStatusId == 1)
+                {
+                    Console.WriteLine($"Transfer ID:{tran.TransferId}\tTo:{tran.UsernameTo}\tAmount:{tran.Amount:C}");
+                }
+            }
+            Console.WriteLine("-------------------------------------------");
+
+            //Ask for user input of Transfer ID
+            Console.Write("Please input the Transfer ID you would like to Approve/Reject: ");
+
+            //Read user input for Transfer ID
+            Int32.TryParse(Console.ReadLine(), out int transferId);
+            Console.WriteLine("Approve/Reject Transfer");
+            Console.WriteLine("-------------------------------------------");
+            Console.WriteLine("1: Approve");
+            Console.WriteLine("2: Reject");
+            Console.WriteLine("0: Don't approve or reject");
+            Console.WriteLine("-------------------------------------------");
+            Console.Write("Please input an option: ");
+            Int32.TryParse(Console.ReadLine(), out int userSelection);
+
+            //If 1, Get transfer via GetUserTransfers, update transfer type ID to 1, update transfer status to 1
+            if (userSelection == 1)
+            {
+                List<Transfer> userInputTransfers = apiService.GetUserTransfers();
+                foreach (Transfer tran in userInputTransfers)
+                {
+                    if (tran.TransferId == transferId)
+                    {
+                        userInputTransfers.Add(tran);
+                    }
+                }
+                Transfer transferToUpdate = userInputTransfers[0];
+
+                if (apiService.GetAccount().Balance >= transferToUpdate.Amount)
+                {
+                    //Update transfers log 
+                    apiService.UpdateApprovedTransfer(transferToUpdate.TransferId, transferToUpdate.AccountTo, transferToUpdate.Amount);
+
+                    //Send approved funds
+                    apiService.SendMoney(transferToUpdate.AccountTo, transferToUpdate.Amount);
+                    Console.WriteLine("Transfer Approval is complete! \n");
+                }
+                else
+                {
+                    Console.WriteLine("Transfer Approval Denied: Insufficient Funds \n");
+                }
+            }
+            //If 2, update transfer status to 3
+            else if (userSelection == 2)
+            {
+                List<Transfer> userInputTransfers = apiService.GetUserTransfers();
+                foreach (Transfer tran in userInputTransfers)
+                {
+                    if (tran.TransferId == transferId)
+                    {
+                        userInputTransfers.Add(tran);
+                    }
+                }
+                Transfer transferToUpdate = userInputTransfers[0];
+
+                if (apiService.GetAccount().Balance >= transferToUpdate.Amount)
+                {
+                    //Update transfers log 
+                    apiService.UpdateRejectedTransfer(transferToUpdate.TransferId, transferToUpdate.AccountTo, transferToUpdate.Amount);
+
+                    Console.WriteLine("Transfer request has been rejected! Get that weak stuff outta here! \n");
+                }
+            }
+
+            //If 0, return to main menu
+            else
+            {
+                Console.WriteLine("It's ok. We're indecisive too.\n");
+            }
+
+            Console.WriteLine("Press any key to return to main menu");
+
             return MenuOptionResult.WaitAfterMenuSelection;
         }
 
@@ -122,7 +204,40 @@ namespace TenmoClient.Views
 
         private MenuOptionResult RequestTEBucks()
         {
-            Console.WriteLine("Not yet implemented!");
+            //Get list of all users and return them
+            List<User> users = apiService.GetUsers();
+
+            Console.WriteLine("Request TE Bucks");
+            Console.WriteLine("-------------------------------------------");
+            foreach (User user in users)
+            {
+                if (user.UserId != UserService.GetUserId())
+                {
+                    Console.WriteLine($"User ID: {user.UserId} \t Username: {user.Username}");
+                }
+            }
+            Console.WriteLine("-------------------------------------------");
+
+            //Ask for user input of ID
+            Console.Write("Please input the User ID from whom you are requesting TE Bucks: ");
+
+            //Read user input
+            Int32.TryParse(Console.ReadLine(), out int fromUserId);
+
+            //Ask for user input of amount to send
+            Console.Write("Please input the amount of money you are requesting: ");
+
+            //Read input
+            Decimal.TryParse(Console.ReadLine(), out decimal requestedMoney);
+
+            Console.WriteLine("-------------------------------------------");
+
+            //Log request and tell user it has been logged 
+            apiService.RequestMoney(fromUserId, requestedMoney);
+            Console.WriteLine("Request TE Bucks transaction has been logged.\n");
+
+            Console.WriteLine("Press any key to return to main menu");
+
             return MenuOptionResult.WaitAfterMenuSelection;
         }
 
