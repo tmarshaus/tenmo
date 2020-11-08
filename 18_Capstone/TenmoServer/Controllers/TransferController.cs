@@ -23,7 +23,7 @@ namespace TenmoServer.Controllers
             this.accountDAO = accountDAO;
         }
 
-        [HttpPost]
+        [HttpPost("sends")]
         public ActionResult<Transfer> SendTEBucks(Transfer transfer)
         {
             //Make sure from account is owned by current user
@@ -33,14 +33,24 @@ namespace TenmoServer.Controllers
             return Ok(transfer);
         }
 
-        [HttpPost]
-        public ActionResult<Transfer> RequestTEBucks(Transfer transfer)
+        [HttpPost("approved")]
+        public ActionResult<Transfer> ApproveTransfer(Transfer transfer)
         {
             //Make sure from account is owned by current user
             Account currentUserAccount = accountDAO.GetAccount(GetUserId());
             transfer.AccountFrom = currentUserAccount.AccountId;
-            transferDAO.RequestMoney(transfer);
+            transferDAO.TransferApprovedRequest(transfer);
             return Ok(transfer);
+        }
+
+        [HttpPost("requests")]
+        public ActionResult<Transfer> RequestTEBucks(Transfer transfer)
+        {
+            //Make sure from account is owned by current user
+            Account currentUserAccount = accountDAO.GetAccount(GetUserId());
+            transfer.AccountTo = currentUserAccount.AccountId;
+            transferDAO.RequestMoney(transfer);
+            return Created($"/requests/{transfer.TransferId}", transfer);
         }
 
         [HttpGet("users")]
@@ -71,18 +81,34 @@ namespace TenmoServer.Controllers
         }
 
         [HttpPut("{transferId}")]
-        public ActionResult<Transfer> UpdateApprovedTransferStatus(int transferId)
+        public ActionResult<Transfer> UpdateTransferStatus(Transfer transfer)
         {
-            Transfer transfer = transferDAO.UpdateApprovedTransfer(transferId);
-            return Ok(transfer);
+            //if (transfer.TransferStatusId == 2)
+            //{
+            //    Transfer transferApproved = transferDAO.UpdateApprovedTransfer(transfer);
+            //    return Ok(transferApproved);
+            //}
+            //else
+            //{
+            //    Transfer transferRejected = transferDAO.UpdateRejectedTransfer(transfer);
+            //    return Ok(transferRejected);
+            //}
+            Transfer transferUpdated = transferDAO.UpdateTransfer(transfer);
+            return Ok(transferUpdated);
         }
 
-        [HttpPut("{transferId}")]
-        public ActionResult<Transfer> UpdateRejectedTransferStatus(int transferId)
-        {
-            Transfer transfer = transferDAO.UpdateRejectedTransfer(transferId);
-            return Ok(transfer);
-        }
+        //[HttpPut("{transferId}")]
+        //public ActionResult<Transfer> UpdateApprovedTransferStatus(int transferId)
+        //{
+        //    Transfer transfer = transferDAO.UpdateApprovedTransfer(transferId);
+        //    return Ok(transfer);
+        //}
 
+        //[HttpPut("{transferId}")]
+        //public ActionResult<Transfer> UpdateRejectedTransferStatus(int transferId)
+        //{
+        //    Transfer transfer = transferDAO.UpdateRejectedTransfer(transferId);
+        //    return Ok(transfer);
+        //}
     }
 }

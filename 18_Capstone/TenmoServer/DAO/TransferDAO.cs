@@ -53,6 +53,41 @@ namespace TenmoServer.DAO
             }
         }
 
+        public Transfer TransferApprovedRequest(Transfer transfer)
+        {
+            //Get current User id balance
+            decimal currentUserBalance = accountDAO.GetAccount(transfer.AccountFrom).Balance;
+
+            //Get toUserid balance
+            decimal toUserBalance = accountDAO.GetAccount(transfer.AccountTo).Balance;
+
+            //Check balance of current user against sentMoney
+            if (currentUserBalance >= transfer.Amount)
+            {
+                //Updated balance for user
+                decimal newCurrentUserBalance = currentUserBalance - transfer.Amount;
+
+                //Updated balance for toUserId
+                decimal newToUserBalance = toUserBalance + transfer.Amount;
+
+                //Update transfer status
+                transfer.TransferStatusId = 2;
+
+                //Update balance for current user
+                UpdateBalance(transfer.AccountFrom, newCurrentUserBalance);
+
+                //Update balance for toUser
+                UpdateBalance(transfer.AccountTo, newToUserBalance);
+
+                return transfer;
+            }
+            else
+            {
+                transfer.TransferStatusId = 3;
+                return transfer;
+            }
+        }
+
         public Transfer SendMoneyTo(Transfer transfer) //removed fromUserId
         {
             //Get current User id balance
@@ -80,6 +115,7 @@ namespace TenmoServer.DAO
                 UpdateBalance(transfer.AccountTo, newToUserBalance);
 
                 LogTransfer(transfer.AccountFrom, transfer.AccountTo, transfer.Amount, 2, transfer.TransferStatusId);
+
                 return transfer;
             }
             else
@@ -89,7 +125,7 @@ namespace TenmoServer.DAO
             }
         }
 
-        public Transfer RequestMoney(Transfer transfer) 
+        public Transfer RequestMoney(Transfer transfer)
         {
             LogTransfer(transfer.AccountFrom, transfer.AccountTo, transfer.Amount, 1, 1);
             return transfer;
@@ -144,8 +180,18 @@ namespace TenmoServer.DAO
                     SqlCommand cmd = new SqlCommand(sql, conn);
                     cmd.Parameters.AddWithValue("@transferTypeId", transferType);
                     cmd.Parameters.AddWithValue("@transferStatusId", transferStatusId);
-                    cmd.Parameters.AddWithValue("@accountFrom", fromId);
-                    cmd.Parameters.AddWithValue("@accountTo", toId);
+
+                    if (transferType == 2)
+                    {
+                        cmd.Parameters.AddWithValue("@accountFrom", fromId);
+                        cmd.Parameters.AddWithValue("@accountTo", toId);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@accountFrom", toId);
+                        cmd.Parameters.AddWithValue("@accountTo", fromId);
+                    }
+
                     cmd.Parameters.AddWithValue("@amount", sentMoney);
 
                     int rowsAffected = cmd.ExecuteNonQuery();
@@ -167,14 +213,16 @@ namespace TenmoServer.DAO
             }
         }
 
-        public Transfer UpdateApprovedTransfer(int transferId)
+        public Transfer UpdateTransfer(Transfer transfer)
         {
-            string sql = @"Update transfers 
-                                Set transfers.transfer_status_id = 2
-                                        Where transfer_id = @transferId;
-                                            @@Identity";
+            string sql = @"Update transfers
+                                Set transfers.transfer_status_id = @transferStatus,
+                                transfers.transfer_type_id = @transferType,
+                                transfers.account_from = @accountFrom,
+                                transfers.account_to = @accountTo,
+                                transfers.amount = @amount
+                                        Where transfer_id = @transferId;";
 
-            Transfer tran = new Transfer();
             try
             {
                 using (SqlConnection conn = new SqlConnection(connString))
@@ -182,21 +230,16 @@ namespace TenmoServer.DAO
                     conn.Open();
 
                     SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@transferId", transferId);
+                    cmd.Parameters.AddWithValue("@transferId", transfer.TransferId);
+                    cmd.Parameters.AddWithValue("@transferStatus", transfer.TransferStatusId);
+                    cmd.Parameters.AddWithValue("@transferType", transfer.TransferTypeId);
+                    cmd.Parameters.AddWithValue("@accountFrom", transfer.AccountFrom);
+                    cmd.Parameters.AddWithValue("@accountTo", transfer.AccountTo);
+                    cmd.Parameters.AddWithValue("@amount", transfer.Amount);
 
                     int rowsAffected = cmd.ExecuteNonQuery();
-                    SqlDataReader rdr = cmd.ExecuteReader();
-                    while (rdr.Read())
-                    {
-                        tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
-                        tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
-                        tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
-                        tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
-                        tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
-                        tran.Amount = Convert.ToDecimal(rdr["amount"]);
-                    }
                 }
-                return tran;
+                return transfer;
             }
             catch (SqlException ex)
             {
@@ -205,42 +248,41 @@ namespace TenmoServer.DAO
             }
         }
 
-        public Transfer UpdateRejectedTransfer(int transferId)
-        {
-            string sql = @"Update transfers 
-                                Set transfers.transfer_status_id = 3
-                                        Where transfer_id = @transferId";
-            Transfer tran = new Transfer();
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connString))
-                {
-                    conn.Open();
+        //public Transfer UpdateRejectedTransfer(int transferId)
+        //{
+        //    string sql = @"Update transfers
+        //                        Set transfers.transfer_status_id = 3
+        //                                Where transfer_id = @transferId";
+        //    Transfer tran = new Transfer();
+        //    try
+        //    {
+        //        using (SqlConnection conn = new SqlConnection(connString))
+        //        {
+        //            conn.Open();
 
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@transferId", transferId);
+        //            SqlCommand cmd = new SqlCommand(sql, conn);
+        //            cmd.Parameters.AddWithValue("@transferId", transferId);
 
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    SqlDataReader rdr = cmd.ExecuteReader();
-                    while (rdr.Read())
-                    {
-                        tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
-                        tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
-                        tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
-                        tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
-                        tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
-                        tran.Amount = Convert.ToDecimal(rdr["amount"]);
-                    }
-                }
-                return tran;
-            
-            }
-            catch (SqlException ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
-        }
+        //            int rowsAffected = cmd.ExecuteNonQuery();
+        //            SqlDataReader rdr = cmd.ExecuteReader();
+        //            while (rdr.Read())
+        //            {
+        //                tran.TransferId = Convert.ToInt32(rdr["transfer_id"]);
+        //                tran.TransferTypeId = Convert.ToInt32(rdr["transfer_type_id"]);
+        //                tran.TransferStatusId = Convert.ToInt32(rdr["transfer_status_id"]);
+        //                tran.AccountFrom = Convert.ToInt32(rdr["account_from"]);
+        //                tran.AccountTo = Convert.ToInt32(rdr["account_to"]);
+        //                tran.Amount = Convert.ToDecimal(rdr["amount"]);
+        //            }
+        //        }
+        //        return tran;
+        //    }
+        //    catch (SqlException ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+        //        throw;
+        //    }
+        //}
 
         public TransferDetails GetTransferDetails(int transferId)
         {
@@ -319,7 +361,8 @@ namespace TenmoServer.DAO
             string sql = @"Select transfers.*, users.username as usernameFrom,
                         (Select username from users where transfers.account_to = users.user_id) as usernameTo from transfers
                             join accounts on accounts.user_id = transfers.account_from
-                                join users on accounts.user_id = users.user_id";
+                                join users on accounts.user_id = users.user_id
+                                   order by transfer_id";
 
             List<Transfer> transfers = new List<Transfer>();
 
@@ -357,7 +400,6 @@ namespace TenmoServer.DAO
                 throw;
             }
         }
-
 
         //public List<List<Transfer>> GetUserTransfers()
         //{

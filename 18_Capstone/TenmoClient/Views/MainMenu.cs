@@ -1,6 +1,7 @@
 ﻿using MenuFramework;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using TenmoClient.Data;
 
@@ -74,9 +75,9 @@ namespace TenmoClient.Views
             Console.WriteLine("-------------------------------------------");
             foreach (Transfer tran in userTransfers)
             {
-                if (tran.AccountFrom == UserService.GetUserId() && tran.TransferStatusId == 1)
+                if (tran.AccountTo == UserService.GetUserId() && tran.TransferStatusId == 1)
                 {
-                    Console.WriteLine($"Transfer ID:{tran.TransferId}\tTo:{tran.UsernameTo}\tAmount:{tran.Amount:C}");
+                    Console.WriteLine($"Transfer ID:{tran.TransferId}\tTo:{tran.UsernameFrom}\tAmount:{tran.Amount:C}");
                 }
             }
             Console.WriteLine("-------------------------------------------");
@@ -98,8 +99,9 @@ namespace TenmoClient.Views
             //If 1, Get transfer via GetUserTransfers, update transfer type ID to 1, update transfer status to 1
             if (userSelection == 1)
             {
-                List<Transfer> userInputTransfers = apiService.GetUserTransfers();
-                foreach (Transfer tran in userInputTransfers)
+                List<Transfer> transferList = apiService.GetUserTransfers();
+                List<Transfer> userInputTransfers = new List<Transfer>();
+                foreach (Transfer tran in transferList.ToList())
                 {
                     if (tran.TransferId == transferId)
                     {
@@ -110,11 +112,13 @@ namespace TenmoClient.Views
 
                 if (apiService.GetAccount().Balance >= transferToUpdate.Amount)
                 {
-                    //Update transfers log 
-                    apiService.UpdateApprovedTransfer(transferToUpdate.TransferId, transferToUpdate.AccountTo, transferToUpdate.Amount);
+                    transferToUpdate.TransferStatusId = 2;
+
+                    //Update transfers log
+                    apiService.UpdateTransfer(transferToUpdate.TransferId, transferToUpdate.AccountFrom, transferToUpdate.Amount, userSelection);
 
                     //Send approved funds
-                    apiService.SendMoney(transferToUpdate.AccountTo, transferToUpdate.Amount);
+                    apiService.ApproveTransfer(transferToUpdate.AccountTo, transferToUpdate.Amount);
                     Console.WriteLine("Transfer Approval is complete! \n");
                 }
                 else
@@ -135,13 +139,12 @@ namespace TenmoClient.Views
                 }
                 Transfer transferToUpdate = userInputTransfers[0];
 
-                if (apiService.GetAccount().Balance >= transferToUpdate.Amount)
-                {
-                    //Update transfers log 
-                    apiService.UpdateRejectedTransfer(transferToUpdate.TransferId, transferToUpdate.AccountTo, transferToUpdate.Amount);
+                transferToUpdate.TransferStatusId = 3;
 
-                    Console.WriteLine("Transfer request has been rejected! Get that weak stuff outta here! \n");
-                }
+                //Update transfers log
+                apiService.UpdateTransfer(transferToUpdate.TransferId, transferToUpdate.AccountTo, transferToUpdate.Amount, userSelection);
+
+                Console.WriteLine("Transfer request has been rejected! Get that weak stuff outta here! \n");
             }
 
             //If 0, return to main menu
@@ -185,7 +188,7 @@ namespace TenmoClient.Views
 
             Console.WriteLine("-------------------------------------------");
 
-            //Check balance to determine whether or not transaction is approved 
+            //Check balance to determine whether or not transaction is approved
             if (apiService.GetAccount().Balance >= moneySent)
             {
                 //Use SendMoney method
@@ -232,7 +235,7 @@ namespace TenmoClient.Views
 
             Console.WriteLine("-------------------------------------------");
 
-            //Log request and tell user it has been logged 
+            //Log request and tell user it has been logged
             apiService.RequestMoney(fromUserId, requestedMoney);
             Console.WriteLine("Request TE Bucks transaction has been logged.\n");
 

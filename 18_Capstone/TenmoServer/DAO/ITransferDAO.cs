@@ -19,10 +19,10 @@ namespace TenmoServer.DAO
 
         Transfer RequestMoney(Transfer transfer);
 
-        List<Transfer> GetPendingUserTransfers();
+        Transfer UpdateTransfer(Transfer transfer);
 
-        Transfer UpdateApprovedTransfer(int transferId);
+        Transfer TransferApprovedRequest(Transfer transfer);
 
-        Transfer UpdateRejectedTransfer(int transferId);
+        //Transfer UpdateRejectedTransfer(Transfer transfer);
     }
 }

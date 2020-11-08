@@ -96,7 +96,7 @@ namespace TenmoClient
                 transfer.TransferStatusId = 2;
                 transfer.TransferTypeId = 2;
 
-                RestRequest request = new RestRequest($"{API_TRANSFER_URL}");
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/sends");
                 request.AddJsonBody(transfer);
 
                 authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
@@ -133,13 +133,13 @@ namespace TenmoClient
             if (LoggedIn)
             {
                 Transfer transfer = new Transfer();
-                transfer.AccountFrom = UserService.GetUserId();
-                transfer.AccountTo = fromUserId;
+                transfer.AccountFrom = fromUserId;
+                transfer.AccountTo = UserService.GetUserId();
                 transfer.Amount = requestedMoney;
                 transfer.TransferStatusId = 1;
                 transfer.TransferTypeId = 1;
 
-                RestRequest request = new RestRequest($"{API_TRANSFER_URL}");
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/requests");
                 request.AddJsonBody(transfer);
 
                 authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
@@ -170,7 +170,6 @@ namespace TenmoClient
                 return null;
             }
         }
-
 
         public List<Transfer> GetUserTransfers()
         {
@@ -242,22 +241,23 @@ namespace TenmoClient
             }
         }
 
-        public Transfer UpdateApprovedTransfer (int transferId, int toUserId, decimal requestAmount)
+        public Transfer ApproveTransfer(int toUserId, decimal sentMoney)
         {
             if (LoggedIn)
             {
                 Transfer transfer = new Transfer();
                 transfer.AccountFrom = UserService.GetUserId();
                 transfer.AccountTo = toUserId;
-                transfer.Amount = requestAmount;
+                transfer.Amount = sentMoney;
                 transfer.TransferStatusId = 2;
                 transfer.TransferTypeId = 1;
 
-                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/{transferId}");
+                RestRequest request = new RestRequest($"{API_TRANSFER_URL}/approved");
                 request.AddJsonBody(transfer);
+
                 authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
 
-                IRestResponse<Transfer> response = authClient.Put<Transfer>(request);
+                IRestResponse<Transfer> response = authClient.Post<Transfer>(request);
 
                 if (response.ResponseStatus != ResponseStatus.Completed)
                 {
@@ -284,15 +284,25 @@ namespace TenmoClient
             }
         }
 
-        public Transfer UpdateRejectedTransfer(int transferId, int toUserId, decimal requestAmount)
+        public Transfer UpdateTransfer(int transferId, int toUserId, decimal requestAmount, int userSelection)
         {
             if (LoggedIn)
             {
                 Transfer transfer = new Transfer();
+                transfer.TransferId = transferId;
                 transfer.AccountFrom = UserService.GetUserId();
                 transfer.AccountTo = toUserId;
                 transfer.Amount = requestAmount;
-                transfer.TransferStatusId = 3;
+
+                if (userSelection == 1)
+                {
+                    transfer.TransferStatusId = 2;
+                }
+                else
+                {
+                    transfer.TransferStatusId = 3;
+                }
+
                 transfer.TransferTypeId = 1;
 
                 RestRequest request = new RestRequest($"{API_TRANSFER_URL}/{transferId}");
@@ -325,6 +335,49 @@ namespace TenmoClient
                 return null;
             }
         }
+
+        //Integrated into one method
+        //public Transfer UpdateRejectedTransfer(int transferId, int toUserId, decimal requestAmount)
+        //{
+        //    if (LoggedIn)
+        //    {
+        //        Transfer transfer = new Transfer();
+        //        transfer.AccountFrom = UserService.GetUserId();
+        //        transfer.AccountTo = toUserId;
+        //        transfer.Amount = requestAmount;
+        //        transfer.TransferStatusId = 3;
+        //        transfer.TransferTypeId = 1;
+
+        //        RestRequest request = new RestRequest($"{API_TRANSFER_URL}/{transferId}");
+        //        request.AddJsonBody(transfer);
+        //        authClient.Authenticator = new JwtAuthenticator(UserService.GetToken());
+
+        //        IRestResponse<Transfer> response = authClient.Put<Transfer>(request);
+
+        //        if (response.ResponseStatus != ResponseStatus.Completed)
+        //        {
+        //            //response not received
+        //            Console.WriteLine("An error occurred communicating with the server.");
+        //            return null;
+        //        }
+        //        else if (!response.IsSuccessful)
+        //        {
+        //            //response non-2xx
+        //            Console.WriteLine("An error response was received from the server. The status code is " + (int)response.StatusCode);
+        //            return null;
+        //        }
+        //        else
+        //        {
+        //            //success
+        //            return response.Data;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("You are not logged in");
+        //        return null;
+        //    }
+        //}
 
         public TransferDetails GetTransferDetails(int transferId)
         {
