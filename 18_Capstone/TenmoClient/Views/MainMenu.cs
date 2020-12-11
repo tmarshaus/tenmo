@@ -44,7 +44,7 @@ namespace TenmoClient.Views
                 {
                     Console.WriteLine($"Transfer ID:{tran.TransferId}\tTo:{tran.UsernameTo}\tAmount:{tran.Amount:C}");
                 }
-                else
+                else if (tran.AccountTo == UserService.GetUserId())
                 {
                     Console.WriteLine($"Transfer ID:{tran.TransferId}\tFrom:{tran.UsernameFrom}\tAmount:{tran.Amount:C}");
                 }
